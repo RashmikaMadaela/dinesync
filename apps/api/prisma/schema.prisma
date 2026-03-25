@@ -1,0 +1,128 @@
+// 1. GENERATOR & DATASOURCE
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [vector] // Enables the pgvector extension for AI
+}
+
+// 2. ENUMS (Restricted choice lists)
+enum Role {
+  GUEST
+  WAITER
+  ADMIN
+}
+
+enum SessionStatus {
+  PENDING_WAITER // Host scanned, waiting for Waiter approval
+  ACTIVE         // Waiter approved, ordering allowed
+  PAYMENT_REQ    // Guests asked for bill
+  CLOSED         // Paid and left
+}
+
+enum OrderStatus {
+  PENDING   // Sent to Kitchen
+  COOKING   // Chef accepted
+  READY     // Chef finished
+  SERVED    // Waiter delivered
+  CANCELLED // Manager override
+}
+
+// 3. MODELS (Database Tables)
+
+model User {
+  id              String    @id @default(uuid())
+  name            String?   
+  role            Role      @default(GUEST)
+  
+  activeSessionId String?
+  activeSession   Session?  @relation("SessionParticipants", fields: [activeSessionId], references: [id])
+  hostedSessions  Session[] @relation("HostUser")
+}
+
+model Table {
+  id        Int       @id @default(autoincrement())
+  label     String    
+  qrSecret  String    @unique @default(uuid()) 
+  sessions  Session[]
+}
+
+model Session {
+  id        String        @id @default(uuid())
+  tableId   Int
+  table     Table         @relation(fields: [tableId], references: [id])
+  status    SessionStatus @default(PENDING_WAITER)
+  
+  hostId    String?       
+  host      User?         @relation("HostUser", fields: [hostId], references: [id])
+
+  createdAt DateTime      @default(now())
+  closedAt  DateTime?
+
+  users     User[]        @relation("SessionParticipants")
+  orders    Order[]
+}
+
+// --- NEW: Category Model ---
+model Category {
+  id    Int        @id @default(autoincrement())
+  name  String     // e.g., "Mains", "Drinks"
+  items MenuItem[]
+}
+
+model MenuItem {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Decimal  @db.Decimal(10, 2)
+  
+  // --- The Inventory Logic ---
+  
+  // 1. The Master Switch (Chef hits "Sold Out" on the tablet)
+  isAvailable Boolean  @default(true) 
+  
+  // 2. Do we count this item mathematically? (True for Coke, False for Rice)
+  trackStock  Boolean  @default(false) 
+  
+  // 3. The actual count (Only matters if trackStock is true)
+  stockCount  Int?     
+
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  embedding   Unsupported("vector(1536)")? 
+  metadata    Json?   
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  sessionId   String
+  session     Session     @relation(fields: [sessionId], references: [id])
+  
+  total       Decimal     @db.Decimal(10, 2)
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+
+  // --- NEW: Link to specific items ---
+  items       OrderItem[]
+}
+
+// --- NEW: OrderItem Model (For Analytics & strict typing) ---
+model OrderItem {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  
+  menuItemId  Int
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
+  
+  quantity    Int      @default(1)
+  
+  // A snapshot of the price when they ordered (in case menu prices change later)
+  priceAtOrder Decimal @db.Decimal(10, 2)
+  
+  // JSON used ONLY for unstructured custom requests
+  modifiers   Json?    // e.g., { "spice_level": "high", "extra_cheese": true }
+}
