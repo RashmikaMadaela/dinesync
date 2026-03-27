@@ -9,15 +9,20 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    // 1. Create a native Postgres connection pool (Hardcoded to bypass Windows caching)
+    // 1. Pull the URL from the environment variables securely
+    const connectionString = process.env.DATABASE_URL;
+
+    if (!connectionString) {
+      throw new Error('DATABASE_URL is not defined in the .env file');
+    }
+
+    // 2. Pass it into the pool
     const pool = new Pool({
-      connectionString: 'postgresql://postgres:root@localhost:5433/dinesync?schema=public',
+      connectionString,
     });
 
-    // 2. Wrap the pool in the new Prisma 7 Adapter
-    const adapter = new PrismaPg(pool);
-
-    // 3. Pass the adapter into Prisma
+    // 3. Wrap and pass to Prisma (keeping our 'as any' fix from earlier!)
+    const adapter = new PrismaPg(pool as any);
     super({ adapter });
   }
 
