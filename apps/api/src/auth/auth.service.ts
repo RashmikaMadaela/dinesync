@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventsGateway } from '../events/events.gateway';
 
 // 1. Define the exact shape of our response to satisfy strict TypeScript
 export interface JoinTableResponse {
@@ -17,7 +18,10 @@ export interface JoinTableResponse {
 @Injectable()
 export class AuthService {
   // 2. Added 'readonly' to satisfy ESLint
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventsGateway: EventsGateway,
+  ) {}
 
   // 3. Added the strict Promise return type
   public async joinTable(
@@ -47,6 +51,7 @@ export class AuthService {
     const activeSession = table.sessions[0];
 
     if (!activeSession) {
+      this.eventsGateway.notifyWaiter(table.id, guestName);
       return {
         status: 'PENDING_HOST',
         message: `Welcome ${guestName}! You are requesting to open ${table.label}. Waiting for waiter approval...`,
