@@ -14,5 +14,6 @@ import { EventsModule } from '../events/events.module';
   ],
   controllers: [AuthController],
   providers: [AuthService],
+  exports: [JwtModule],
 })
 export class AuthModule {}
