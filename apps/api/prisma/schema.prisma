@@ -24,6 +24,7 @@ enum SessionStatus {
 }
 
 enum OrderStatus {
+  CART      // User is still adding items on their phone
   PENDING   // Sent to Kitchen
   COOKING   // Chef accepted
   READY     // Chef finished
