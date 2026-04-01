@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { EventsModule } from './events/events.module';
 import { MenuModule } from './menu/menu.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MenuModule } from './menu/menu.module';
     AuthModule,
     EventsModule,
     MenuModule,
+    CartModule,
   ],
   controllers: [AppController],
   providers: [AppService],
