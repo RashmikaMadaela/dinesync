@@ -1,5 +1,5 @@
 export class AddToCartDto {
-  menuItemId: number;
-  quantity: number;
+  menuItemId!: number;
+  quantity!: number;
   notes?: string;
 }

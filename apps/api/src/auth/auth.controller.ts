@@ -7,14 +7,14 @@ import {
 
 // Defining the shape of the incoming JSON body
 export class JoinTableDto {
-  tableId: number;
-  secret: string;
-  name: string;
+  tableId!: number;
+  secret!: string;
+  name!: string;
 }
 
 export class ApproveTableDto {
-  tableId: number;
-  waiterName: string;
+  tableId!: number;
+  waiterName!: string;
 }
 
 @Controller('auth')
