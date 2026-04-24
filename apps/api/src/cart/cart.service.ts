@@ -5,10 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddToCartDto } from './cart.dto';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class CartService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventsGateway: EventsGateway,
+  ) {}
 
   public async addItem(sessionId: string, dto: AddToCartDto) {
     // 1. Verify the menu item exists
@@ -70,6 +74,59 @@ export class CartService {
     return {
       message: `Added ${dto.quantity}x ${item.name} to the table's cart.`,
       orderItem,
+    };
+  }
+  // --- NEW: View the Cart ---
+  public async getCart(sessionId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { sessionId, status: 'CART' },
+      include: {
+        items: {
+          include: { menuItem: true }, // Bring in the food details!
+        },
+      },
+    });
+
+    if (!order) {
+      return { message: 'Your cart is empty', items: [], total: 0 };
+    }
+
+    return order;
+  }
+
+  // --- NEW: Send to Kitchen ---
+  public async checkoutCart(sessionId: string, tableId: number) {
+    // 1. Find the active cart
+    const order = await this.prisma.order.findFirst({
+      where: { sessionId, status: 'CART' },
+      include: { items: { include: { menuItem: true } } },
+    });
+
+    if (!order || order.items.length === 0) {
+      throw new BadRequestException('Cannot checkout an empty cart.');
+    }
+
+    // 2. Lock the cart by changing the status to PENDING (Sent to Kitchen)
+    const submittedOrder = await this.prisma.order.update({
+      where: { id: order.id },
+      data: { status: 'PENDING' },
+      include: {
+        items: { include: { menuItem: true } },
+      },
+    });
+
+    // 3. THE REAL-TIME MAGIC: Alert the Kitchen!
+    this.eventsGateway.server.emit('kitchen-alert', {
+      message: `New Order for Table ${tableId}!`,
+      orderId: submittedOrder.id,
+      items: submittedOrder.items.map(
+        (i) => `${i.quantity}x ${i.menuItem.name}`,
+      ),
+    });
+
+    return {
+      message: 'Order sent to the kitchen!',
+      order: submittedOrder,
     };
   }
 }

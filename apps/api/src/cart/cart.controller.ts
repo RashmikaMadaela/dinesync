@@ -1,4 +1,11 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AddToCartDto } from './cart.dto';
 import { JwtAuthGuard, JwtPayload } from '../auth/jwt.guard';
@@ -14,5 +21,18 @@ export class CartController {
     @Body() body: AddToCartDto,
   ) {
     return this.cartService.addItem(req.user.sessionId, body);
+  }
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  public async getCart(@Request() req: { user: JwtPayload }) {
+    return this.cartService.getCart(req.user.sessionId);
+  }
+
+  // --- NEW: Checkout ---
+  @UseGuards(JwtAuthGuard)
+  @Post('checkout')
+  public async checkoutCart(@Request() req: { user: JwtPayload }) {
+    // Notice how we pass BOTH the sessionId and the tableId securely from the token!
+    return this.cartService.checkoutCart(req.user.sessionId, req.user.tableId);
   }
 }
