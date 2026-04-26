@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { EventsModule } from './events/events.module';
 import { MenuModule } from './menu/menu.module';
 import { CartModule } from './cart/cart.module';
+import { KitchenModule } from './kitchen/kitchen.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { CartModule } from './cart/cart.module';
     EventsModule,
     MenuModule,
     CartModule,
+    KitchenModule,
   ],
   controllers: [AppController],
   providers: [AppService],
