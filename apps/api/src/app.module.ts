@@ -8,6 +8,7 @@ import { EventsModule } from './events/events.module';
 import { MenuModule } from './menu/menu.module';
 import { CartModule } from './cart/cart.module';
 import { KitchenModule } from './kitchen/kitchen.module';
+import { WaiterModule } from './waiter/waiter.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { KitchenModule } from './kitchen/kitchen.module';
     MenuModule,
     CartModule,
     KitchenModule,
+    WaiterModule,
   ],
   controllers: [AppController],
   providers: [AppService],
