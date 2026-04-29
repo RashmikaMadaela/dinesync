@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -18,5 +18,20 @@ export class WaiterService {
       },
       orderBy: { id: 'asc' },
     });
+  }
+  public async serveOrder(orderId: string) {
+    const order = await this.prisma.order.update({
+      where: { id: orderId },
+      data: { status: 'SERVED' },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    return {
+      message: 'Order successfully delivered to the table!',
+      order,
+    };
   }
 }
