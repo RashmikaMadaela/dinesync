@@ -35,4 +35,10 @@ export class CartController {
     // Notice how we pass BOTH the sessionId and the tableId securely from the token!
     return this.cartService.checkoutCart(req.user.sessionId, req.user.tableId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('request-bill')
+  public async requestBill(@Request() req: { user: JwtPayload }) {
+    return this.cartService.requestBill(req.user.sessionId, req.user.tableId);
+  }
 }

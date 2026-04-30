@@ -129,4 +129,23 @@ export class CartService {
       order: submittedOrder,
     };
   }
+
+  public async requestBill(sessionId: string, tableId: number) {
+    // 1. Change the session status so the Waiter knows they want to pay
+    const session = await this.prisma.session.update({
+      where: { id: sessionId },
+      data: { status: 'PAYMENT_REQ' },
+    });
+
+    // 2. THE REAL-TIME MAGIC: Ping the Waiter's iPad
+    this.eventsGateway.server.emit('bill-requested', {
+      message: `Table ${tableId} has requested the bill!`,
+      tableId,
+    });
+
+    return {
+      message: 'Bill requested! Your waiter will be right with you.',
+      session,
+    };
+  }
 }
