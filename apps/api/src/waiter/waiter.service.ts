@@ -34,4 +34,33 @@ export class WaiterService {
       order,
     };
   }
+
+  // --- NEW: Close the Table (Checkout) ---
+  public async checkoutTable(tableId: number) {
+    // 1. Find the table's currently active session (ignoring closed ones)
+    const session = await this.prisma.session.findFirst({
+      where: { 
+        tableId: tableId,
+        status: { not: 'CLOSED' } 
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException('No active session found for this table.');
+    }
+
+    // 2. Close the session, permanently locking the digital cart
+    const closedSession = await this.prisma.session.update({
+      where: { id: session.id },
+      data: { 
+        status: 'CLOSED',
+        closedAt: new Date(), 
+      },
+    });
+
+    return {
+      message: `Table ${tableId} has been successfully closed and reset for new guests.`,
+      session: closedSession,
+    };
+  }
 }
