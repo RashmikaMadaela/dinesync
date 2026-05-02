@@ -1,4 +1,11 @@
-import { Controller, Get, Patch, Param, Post } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Post,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { WaiterService } from './waiter.service';
 
 @Controller('waiter')
