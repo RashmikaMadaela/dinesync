@@ -148,4 +148,38 @@ export class CartService {
       session,
     };
   }
+
+  // --- NEW: Remove Item from Cart ---
+  public async removeItem(sessionId: string, orderItemId: string) {
+    // 1. Find the active cart for this session
+    const order = await this.prisma.order.findFirst({
+      where: { sessionId, status: 'CART' },
+    });
+
+    if (!order) {
+      throw new NotFoundException('No active cart found.');
+    }
+
+    // 2. Find the item to make sure it exists and actually belongs to this cart
+    const itemToRemove = await this.prisma.orderItem.findFirst({
+      where: { id: orderItemId, orderId: order.id },
+    });
+
+    if (!itemToRemove) {
+      throw new NotFoundException('Item not found in your cart.');
+    }
+
+    // 3. Delete the item and deduct the cost in one safe database transaction
+    const lineTotal = Number(itemToRemove.priceAtOrder) * itemToRemove.quantity;
+
+    await this.prisma.$transaction([
+      this.prisma.orderItem.delete({ where: { id: orderItemId } }),
+      this.prisma.order.update({
+        where: { id: order.id },
+        data: { total: { decrement: lineTotal } },
+      }),
+    ]);
+
+    return { message: 'Item removed from cart successfully.' };
+  }
 }

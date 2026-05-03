@@ -2,6 +2,8 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
+  Param,
   Body,
   UseGuards,
   Request,
@@ -40,5 +42,15 @@ export class CartController {
   @Post('request-bill')
   public async requestBill(@Request() req: { user: JwtPayload }) {
     return this.cartService.requestBill(req.user.sessionId, req.user.tableId);
+  }
+
+  // --- NEW: Remove Item ---
+  @UseGuards(JwtAuthGuard)
+  @Delete('item/:itemId')
+  public async removeItem(
+    @Request() req: { user: JwtPayload },
+    @Param('itemId') itemId: string,
+  ) {
+    return this.cartService.removeItem(req.user.sessionId, itemId);
   }
 }
