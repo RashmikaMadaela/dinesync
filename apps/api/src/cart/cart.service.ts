@@ -182,4 +182,29 @@ export class CartService {
 
     return { message: 'Item removed from cart successfully.' };
   }
+
+  // --- NEW: Clear Entire Cart ---
+  public async clearCart(sessionId: string) {
+    // 1. Find the active cart
+    const order = await this.prisma.order.findFirst({
+      where: { sessionId, status: 'CART' },
+    });
+
+    if (!order) {
+      return { message: 'Your cart is already empty.' };
+    }
+
+    // 2. Wipe the items and reset the total to 0 safely
+    await this.prisma.$transaction([
+      this.prisma.orderItem.deleteMany({
+        where: { orderId: order.id },
+      }),
+      this.prisma.order.update({
+        where: { id: order.id },
+        data: { total: 0 },
+      }),
+    ]);
+
+    return { message: 'Cart cleared successfully.' };
+  }
 }

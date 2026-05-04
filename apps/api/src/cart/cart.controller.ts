@@ -53,4 +53,11 @@ export class CartController {
   ) {
     return this.cartService.removeItem(req.user.sessionId, itemId);
   }
+
+  // --- NEW: Clear Cart ---
+  @UseGuards(JwtAuthGuard)
+  @Delete('clear')
+  public async clearCart(@Request() req: { user: JwtPayload }) {
+    return this.cartService.clearCart(req.user.sessionId);
+  }
 }
