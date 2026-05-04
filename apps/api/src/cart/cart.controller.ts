@@ -60,4 +60,11 @@ export class CartController {
   public async clearCart(@Request() req: { user: JwtPayload }) {
     return this.cartService.clearCart(req.user.sessionId);
   }
+
+  // --- NEW: Order History ---
+  @UseGuards(JwtAuthGuard)
+  @Get('history')
+  public async getOrderHistory(@Request() req: { user: JwtPayload }) {
+    return this.cartService.getOrderHistory(req.user.sessionId);
+  }
 }

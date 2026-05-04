@@ -207,4 +207,25 @@ export class CartService {
 
     return { message: 'Cart cleared successfully.' };
   }
+
+  // --- NEW: View Order History ---
+  public async getOrderHistory(sessionId: string) {
+    const history = await this.prisma.order.findMany({
+      where: {
+        sessionId: sessionId,
+        status: { not: 'CART' }, // Get everything that has been submitted!
+      },
+      include: {
+        items: {
+          include: { menuItem: true }, // Bring in the food details
+        },
+      },
+      orderBy: { createdAt: 'desc' }, // Newest orders at the top
+    });
+
+    return {
+      message: 'Order history retrieved successfully.',
+      orders: history,
+    };
+  }
 }
