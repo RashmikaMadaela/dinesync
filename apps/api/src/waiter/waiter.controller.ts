@@ -26,4 +26,12 @@ export class WaiterController {
   public async checkoutTable(@Param('tableId', ParseIntPipe) tableId: number) {
     return this.waiterService.checkoutTable(tableId);
   }
+
+  // --- NEW: View Receipt ---
+  @Get('table/:tableId/receipt')
+  public async generateReceipt(
+    @Param('tableId', ParseIntPipe) tableId: number,
+  ) {
+    return this.waiterService.generateReceipt(tableId);
+  }
 }
